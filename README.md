@@ -1,25 +1,24 @@
 # TaskPulse 🚀
 
-TaskPulse is a modern Android task management and productivity tracking application developed using Kotlin and Firebase. The app helps users organize daily activities, manage priorities, track progress, and improve productivity through real-time synchronization, smart reminders, and analytics dashboards.
+TaskPulse is a modern Android task management and productivity tracking application developed using Kotlin and Firebase. The application helps users organize daily activities, manage priorities, track deadlines, and improve productivity through real-time synchronization, smart reminders, and interactive analytics.
 
-TaskPulse combines task scheduling, cloud storage, offline support, notifications, and visual productivity insights into one clean and user-friendly platform.
+TaskPulse combines task scheduling, cloud storage, offline support, notifications, and productivity visualization into one clean and user-friendly platform.
 
 ---
 
 ## ✨ Features
 
-- **Secure Authentication**: User login and registration using Firebase Authentication.
-- **Task Management**: Create, edit, update, and delete tasks easily.
-- **Real-Time Synchronization**: Tasks sync instantly across devices using Firebase Firestore.
-- **Task Categorization**: Organize tasks into categories like Work, Study, Personal, etc.
-- **Priority Management**: Set High, Medium, or Low priorities for better task planning.
-- **Smart Search & Filters**: Search tasks quickly and filter by category, priority, or status.
-- **Smart Notifications**: Deadline reminders using AlarmManager and BroadcastReceiver.
-- **Offline Support**: Tasks remain accessible using Room Database even without internet.
-- **Analytics Dashboard**: Interactive graphs and charts for productivity tracking.
-- **Progress Tracking**: Monitor completed and pending tasks in real time.
-- **Recurring Tasks**: Support for repeated daily or weekly tasks.
-- **Modern UI**: Built using Material Design 3 components for a clean experience.
+- Secure login and registration using Firebase Authentication
+- Create, edit, update, and delete tasks
+- Real-time synchronization using Firebase Firestore
+- Task categorization and priority management
+- Smart search and filtering system
+- Deadline reminders and smart notifications
+- Offline task support using Room Database
+- Interactive analytics dashboard
+- Real-time progress tracking
+- Recurring task management
+- Clean Material Design 3 interface
 
 ---
 
@@ -29,34 +28,75 @@ TaskPulse includes a built-in analytics dashboard that helps users understand th
 
 - Task completion trends
 - Category-wise productivity distribution
-- Priority-based analysis
+- Priority-based task analysis
 - Daily and weekly productivity graphs
 - Progress indicators and completion rates
 
-Charts are implemented using **MPAndroidChart / AnyChart** libraries.
+Charts and visualizations are implemented using MPAndroidChart / AnyChart libraries.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technologies Used
 
-- **Language**: Kotlin
-- **Architecture**: MVVM (Model-View-ViewModel)
-- **Database**: Firebase Firestore + Room Database
-- **Authentication**: Firebase Authentication
-- **Architecture Pattern**: Repository Pattern
-- **Asynchronous Programming**: Kotlin Coroutines & Flow
-- **UI Components**: Material Design 3, RecyclerView, ViewBinding
-- **Notifications**: AlarmManager & BroadcastReceiver
-- **Analytics & Graphs**: MPAndroidChart / AnyChart
-- **IDE**: Android Studio
+- Kotlin
+- Firebase Authentication
+- Firebase Firestore
+- Room Database
+- MVVM Architecture
+- Repository Pattern
+- Kotlin Coroutines
+- ViewBinding
+- Material Design 3
+- RecyclerView
+- AlarmManager & BroadcastReceiver
+- MPAndroidChart / AnyChart
+- Android Studio
 
 ---
 
-## 🚀 Getting Started
+## 🔔 Notifications System
 
-### Prerequisites
-- Android Studio Ladybug (or newer)
-- JDK 17+
-- Android SDK 35
-- Firebase Project Configuration
+TaskPulse uses AlarmManager and BroadcastReceiver to provide reliable task reminders and deadline notifications for users.
 
+---
+
+## ☁️ Firebase Integration
+
+Firebase services are integrated for:
+- Secure user authentication
+- Real-time cloud synchronization
+- Cloud-based task storage
+- User-specific data management
+
+---
+
+## 🎯 Advantages
+
+- Helps users stay organized and productive
+- Supports both online and offline task management
+- Provides real-time synchronization across devices
+- Offers visual productivity analytics
+- Simple and user-friendly interface
+- Secure cloud-based storage system
+- Scalable architecture for future improvements
+
+---
+
+## 🔮 Future Improvements
+
+- AI-based task recommendations
+- Team collaboration support
+- Shared task boards
+- Calendar integration
+- Voice-based task creation
+- Advanced productivity analytics
+
+---
+
+## 📄 License
+
+This project was developed for educational and learning purposes.
+
+---
+
+Developed by **Bharath B**
