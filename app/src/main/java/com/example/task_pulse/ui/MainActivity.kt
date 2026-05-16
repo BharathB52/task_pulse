@@ -38,6 +38,14 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Check Auth
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -49,6 +57,18 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
         updateGreeting()
         checkNotificationPermission()
         observeTasks()
+        
+        binding.btnAnalytics?.setOnClickListener {
+            startActivity(Intent(this, AnalyticsActivity::class.java))
+        }
+
+        // Add Logout listener (using the user icon if we had one, or long click on greeting)
+        binding.tvGreeting.setOnLongClickListener {
+            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            true
+        }
     }
 
     private fun setupRecyclerView() {
@@ -145,13 +165,8 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
     }
 
     private fun updateGreeting() {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        val greeting = when (hour) {
-            in 0..11 -> "Good Morning,"
-            in 12..16 -> "Good Afternoon,"
-            else -> "Good Evening,"
-        }
-        binding.tvGreeting.text = greeting
+        binding.tvGreeting.text = "Hello"
+        binding.tvUserName.text = "user"
         
         val sdf = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault())
         binding.tvCurrentDate.text = sdf.format(Date())
@@ -161,6 +176,18 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+        
+        // Handle Exact Alarm permission for Android 14+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                android.widget.Toast.makeText(this, "Please enable Alarms & Reminders for TaskPulse in settings", android.widget.Toast.LENGTH_LONG).show()
+                val intent = Intent().apply {
+                    action = android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                }
+                startActivity(intent)
             }
         }
     }
@@ -174,9 +201,15 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
     private fun observeTasks() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.tasks.collectLatest { tasks ->
-                    adapter.submitList(tasks)
-                    updateProgress(tasks)
+                launch {
+                    viewModel.tasks.collect { tasks ->
+                        adapter.submitList(tasks)
+                    }
+                }
+                launch {
+                    viewModel.allTasks.collect { allTasks ->
+                        updateProgress(allTasks)
+                    }
                 }
             }
         }
@@ -190,6 +223,7 @@ class MainActivity : AppCompatActivity(), TaskAdapter.OnItemClickListener {
         }
         val completed = tasks.count { it.isCompleted }
         val percent = (completed * 100) / tasks.size
+        
         binding.progressBar.progress = percent
         binding.tvProgress.text = "$percent%"
     }

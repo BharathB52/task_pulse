@@ -18,6 +18,7 @@ import com.example.task_pulse.utils.ReminderBroadcastReceiver
 import com.example.task_pulse.viewmodel.TaskViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import android.os.Build
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,7 +28,7 @@ class AddTaskActivity : AppCompatActivity() {
     private val viewModel: TaskViewModel by viewModels()
 
     private val calendar = Calendar.getInstance()
-    private var editingTaskId: Int = -1
+    private var editingTaskId: String? = null
     private var currentTask: Task? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,13 +36,13 @@ class AddTaskActivity : AppCompatActivity() {
         binding = ActivityAddTaskBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        editingTaskId = intent.getIntExtra("task_id", -1)
+        editingTaskId = intent.getStringExtra("task_id")
 
         setupToolbar()
         setupPickers()
         setupSpinners()
 
-        if (editingTaskId != -1) {
+        if (editingTaskId != null) {
             loadTaskData()
         }
 
@@ -53,7 +54,7 @@ class AddTaskActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.toolbar.setNavigationOnClickListener { finish() }
         
-        if (editingTaskId != -1) {
+        if (editingTaskId != null) {
             binding.toolbar.title = "Edit Task"
             binding.btnSaveTask.text = "Update Task"
         }
@@ -105,7 +106,7 @@ class AddTaskActivity : AppCompatActivity() {
 
     private fun loadTaskData() {
         lifecycleScope.launch {
-            val task = viewModel.getTaskById(editingTaskId)
+            val task = editingTaskId?.let { viewModel.getTaskById(it) }
             task?.let {
                 if (currentTask == null) { // Only load once to avoid overwriting user edits
                     currentTask = it
@@ -150,7 +151,7 @@ class AddTaskActivity : AppCompatActivity() {
         }
 
         val task = Task(
-            id = if (editingTaskId != -1) editingTaskId else 0,
+            id = editingTaskId ?: "",
             title = title,
             description = desc,
             deadline = calendar.timeInMillis,
@@ -160,36 +161,65 @@ class AddTaskActivity : AppCompatActivity() {
             isCompleted = currentTask?.isCompleted ?: false
         )
 
-        if (editingTaskId != -1) {
+        if (editingTaskId != null) {
             viewModel.update(task)
             Toast.makeText(this, "Task updated!", Toast.LENGTH_SHORT).show()
+            scheduleReminder(task)
+            finish()
         } else {
-            viewModel.insert(task)
-            Toast.makeText(this, "Task saved!", Toast.LENGTH_SHORT).show()
+            viewModel.insert(task) { newId ->
+                val newTask = task.copy(id = newId)
+                scheduleReminder(newTask)
+                runOnUiThread {
+                    Toast.makeText(this@AddTaskActivity, "Task saved!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
         }
-        
-        scheduleReminder(task)
-        finish()
     }
 
     private fun scheduleReminder(task: Task) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        
+        // Check exact alarm permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                android.util.Log.w("TaskPulse", "Exact alarm permission missing. Fallback to inexact alarm.")
+                // Optionally request permission or just use inexact
+            }
+        }
+
         val intent = Intent(this, ReminderBroadcastReceiver::class.java).apply {
             putExtra("task_id", task.id)
             putExtra("title", task.title)
             putExtra("desc", task.description)
         }
         
+        // Request code must be Int, so we use hashCode
+        val requestCode = task.id.hashCode()
+
         val pendingIntent = PendingIntent.getBroadcast(
-            this, task.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         if (task.deadline > System.currentTimeMillis()) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                task.deadline,
-                pendingIntent
-            )
+            android.util.Log.d("TaskPulse", "Scheduling alarm for task ID: ${task.id} at ${task.deadline} (Now: ${System.currentTimeMillis()})")
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    task.deadline,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    task.deadline,
+                    pendingIntent
+                )
+            }
+        } else {
+            android.util.Log.w("TaskPulse", "Cannot schedule alarm: deadline is in the past for task ID: ${task.id}")
         }
     }
 }

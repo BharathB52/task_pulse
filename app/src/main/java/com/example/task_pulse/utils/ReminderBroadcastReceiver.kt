@@ -9,24 +9,29 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.task_pulse.ui.MainActivity
-
-import com.example.task_pulse.database.TaskDatabase
+import com.example.task_pulse.database.TaskRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ReminderBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val taskId = intent.getIntExtra("task_id", -1)
+        val taskId = intent.getStringExtra("task_id")
         val action = intent.action
+        
+        android.util.Log.d("TaskPulse", "Received broadcast: action=$action, taskId=$taskId")
 
-        if (action == "MARK_COMPLETED" && taskId != -1) {
+        if (action == "MARK_COMPLETED" && taskId != null) {
             CoroutineScope(Dispatchers.IO).launch {
-                val db = TaskDatabase.getInstance(context)
-                db.taskDao().markTaskAsCompleted(taskId)
+                val repository = TaskRepository()
+                val task = repository.getTaskById(taskId)
+                task?.let {
+                    repository.update(it.copy(isCompleted = true))
+                }
                 
                 val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.cancel(taskId)
+                notificationManager.cancel(taskId.hashCode())
+                android.util.Log.d("TaskPulse", "Task $taskId marked as completed from notification")
             }
             return
         }
@@ -43,7 +48,7 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
         }
 
         val mainIntent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(context, 0, mainIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getActivity(context, taskId.hashCode(), mainIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         // Mark as completed action
         val completeIntent = Intent(context, ReminderBroadcastReceiver::class.java).apply {
@@ -51,7 +56,7 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
             putExtra("task_id", taskId)
         }
         val completePendingIntent = PendingIntent.getBroadcast(
-            context, taskId + 1, completeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context, taskId.hashCode() + 1000, completeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
@@ -64,6 +69,7 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
             .addAction(android.R.drawable.ic_menu_view, "Mark as Done", completePendingIntent)
             .build()
 
-        notificationManager.notify(taskId, notification)
+        android.util.Log.d("TaskPulse", "Showing notification for task $taskId")
+        notificationManager.notify(taskId.hashCode(), notification)
     }
 }

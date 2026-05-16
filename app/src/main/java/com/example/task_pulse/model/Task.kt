@@ -1,17 +1,16 @@
 package com.example.task_pulse.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.google.firebase.firestore.PropertyName
 
-@Entity(tableName = "tasks")
 data class Task(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val title: String,
-    val description: String,
-    val deadline: Long, // Combines date and time
-    val priority: String, // "High", "Medium", "Low"
-    val category: String = "Personal", // "Work", "Study", "Personal"
-    val isCompleted: Boolean = false,
-    val repeatInterval: String = "None" // "None", "Daily", "Weekly", "Custom"
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val deadline: Long = 0,
+    val priority: String = "Low",
+    val category: String = "Personal",
+    @get:PropertyName("isCompleted")
+    @set:PropertyName("isCompleted")
+    var isCompleted: Boolean = false,
+    val repeatInterval: String = "None"
 )

@@ -92,7 +92,8 @@ class TaskAdapter(private val listener: OnItemClickListener) :
 
             cbComplete.setOnCheckedChangeListener(null)
             cbComplete.isChecked = task.isCompleted
-            cbComplete.setOnCheckedChangeListener { _, isChecked ->
+            cbComplete.setOnClickListener {
+                val isChecked = (it as CheckBox).isChecked
                 listener.onStatusChanged(task.copy(isCompleted = isChecked))
             }
             
