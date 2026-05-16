@@ -60,8 +60,3 @@ Charts are implemented using **MPAndroidChart / AnyChart** libraries.
 - Android SDK 35
 - Firebase Project Configuration
 
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/BharathB52/task_pulse.git
